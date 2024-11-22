@@ -1,0 +1,20 @@
+
+
+<div class="wrapper-forgot">
+  <div class="form-box">
+    <h1>Forgot password?</h1>
+
+    <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
+      <%= render "devise/shared/error_messages", resource: resource %>
+
+      <div class="input-box">
+        <%= f.text_field :login, placeholder: "Username", class: "input", autocomplete: "off"  %>
+        <i class='bx bxs-user'></i>
+      </div>
+
+      <div class="actions">
+        <%= f.submit "Send the reset instruction" , class: "btn" %>
+      </div>
+    <% end %>
+  </div>
+</div>

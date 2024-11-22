@@ -1,0 +1,30 @@
+<%- if controller_name != 'sessions' %>
+  <%= button_to "Log in", new_session_path(resource_name), method: :get, class: "btn login-button" %>
+<% end %>
+
+<%#- if devise_mapping.lockable? && resource_class.unlock_strategy_enabled?(:email) && controller_name != 'unlocks' %>
+  <%#= link_to "Didn't receive unlock instructions?", new_unlock_path(resource_name) %><br />
+<%# end %>
+
+<%- if devise_mapping.omniauthable? %>
+  <div class="social-login-buttons">
+    <% if resource_class.omniauth_providers.include?(:google_oauth2) %>
+      <%= button_to omniauth_authorize_path(resource_name, :google_oauth2),
+                    method: :post, 
+                    data: { turbo: "false" }, 
+                    class: "google-signin-button" do %>
+        <%= image_tag("web_neutral_rd_na@1x.png", alt: "Sign in with Google") %>
+      <% end %>
+    <% end %>
+
+    <% if resource_class.omniauth_providers.include?(:github) %>
+      <%= button_to omniauth_authorize_path(resource_name, :github),
+                    method: :post, 
+                    data: { turbo: "false" }, 
+                    class: "github-signin-button" do %>
+        <%= image_tag("icons8-github-50 (1).png", alt: "Sign in with GitHub") %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+

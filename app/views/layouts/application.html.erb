@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Page Title: The title is dynamically set by `content_for :title`, defaulting to "Weather Analyst" if no specific title is provided -->
+    <title><%= content_for(:title) || "Weather Analyst" %></title>
+
+    <!-- Meta tag for responsive design, ensuring proper scaling on mobile devices -->
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <!-- Meta tags for making the app installable on Apple and Android devices -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- External stylesheet for Boxicons icons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+
+
+    <!-- Rails-provided CSRF protection tags for form security -->
+    <%= csrf_meta_tags %>
+    <!-- Rails-provided Content Security Policy meta tags -->
+    <%= csp_meta_tag %>
+
+    <!-- Placeholder for additional `<head>` content injected from specific views -->
+    <%= yield :head %>
+
+    <!-- Manifest for Progressive Web App (PWA), currently commented out but ready for use -->
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <!-- Favicon links for different formats -->
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <!-- Include all stylesheets: `tailwind` for utility classes and `inter-font` for font styles -->
+    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+    <!-- Custom application styles -->
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+
+    <!-- Include JavaScript via Rails Importmaps -->
+    <%= javascript_importmap_tags %>
+</head>
+
+<body>
+    <!-- Display flash notifications and alerts dynamically -->
+    <p class="notice"><%= notice %></p>
+    <p class="alert"><%= alert %></p>
+
+    <!-- Header containing the application title and navigation -->
+    <header>
+        <h1 class="logo">Weather</h1>
+
+        <!-- Conditional rendering for the navigation bar -->
+        <!-- Navigation is displayed only on specific pages such as "pages#index" or "sessions#new" -->
+        <% if (controller_name == "pages" && action_name == "index") || (controller_name == "sessions" && action_name == "new") %>
+        <nav class="navigation">
+            <!-- Navigation links -->
+            <a href="/">Home</a>
+            <a href="javascript:void(0);" onclick="toggleForecast()">Forecast</a>
+            <a onclick="toggleNotification()" id="notification-button" style="cursor: pointer;">Contact</a>
+
+            <!-- Conditional buttons based on user authentication -->
+            <% if user_signed_in? %>
+            <!-- If the user is signed in, show "Edit Profile" and "Sign Out" options -->
+            <button class="btnlogin-popup" onclick="location.href='<%= edit_user_registration_path %>'">Edit Profile</button>
+            <button class="btnlogin-popup" onclick="location.href='<%= destroy_user_session_path %>'" data-confirm="Are you sure?" data-method="delete">Sign Out</button>
+            <% else %>
+            <!-- If the user is not signed in, show the "Sign In" button -->
+            <!-- This toggles a login form's visibility -->
+            <button onclick="var loginForm = document.getElementById('login-form'); 
+              if (loginForm.classList.contains('show')) {
+                loginForm.classList.remove('show');
+              } else {
+                loginForm.classList.add('show');
+              }" class="btnlogin-popup">Sign In</button>
+            <% end %>
+
+            <!-- JavaScript functions for toggling Forecast and Notification sections -->
+            <script>
+                // Toggles the visibility of the Forecast section
+                function toggleForecast() {
+                    const forecastContainer = document.getElementById('forecast-container');
+                    if (forecastContainer.style.display === 'none') {
+                        forecastContainer.style.display = 'block';
+                    } else {
+                        forecastContainer.style.display = 'none';
+                    }
+                }
+
+                // Toggles the visibility of the Notification section
+                function toggleNotification() {
+                    const notificationContainer = document.getElementById('notification-container');
+                    const notificationButton = document.getElementById('notification-button');
+
+                    // Toggle the visibility of the notification container
+                    if (notificationContainer.style.display === 'none') {
+                        notificationContainer.style.display = 'block';
+                    } else {
+                        notificationContainer.style.display = 'none';
+                    }
+                }
+            </script>
+        </nav>
+        <% end %>
+    </header>
+
+    <!-- Notification container section -->
+    <!-- Initially hidden and displayed when the "Contact" button is clicked -->
+    <div id="notification-container" style="display: none; position: absolute; justify-content: center; margin-left: -10px;">
+        <h1>Please contact:</h1>
+        <p> The website is owned by Huynh Doan Hoang Minh. It is designed to provide weather
+            predictions for cities worldwide. Additionally, it features the ability to visualize a 5-day
+            weather forecast chart and offers detailed information for each of these days.</p>
+        <!-- Close button for the notification section -->
+        <button onclick="toggleNotification()" id="notification-button" class="close-btn">OK</button>
+    </div>
+
+    <!-- Main content of the page, dynamically injected from views -->
+    <%= yield %>
+</body>
+
+</html>

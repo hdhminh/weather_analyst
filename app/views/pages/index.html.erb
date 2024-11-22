@@ -1,0 +1,394 @@
+<div class="container <%= 'active' if @weather_data_present %> <%= 'active-error' if @error_message %>">
+    <!-- Search box for users to enter a city name -->
+    <%= form_tag(root_path, method: :get, class: 'search-box') do %>
+    <!-- Icon for the search button -->
+    <i class='bx bxs-map'></i>
+    <!-- Input field for the user to enter the city name -->
+    <%= text_field_tag :city, @city_name, placeholder: "Enter your location", class: 'search-input' %>
+    <!-- Submit button to send the search query -->
+    <%= button_tag(type: "submit", class: "bx bx-search") do %>
+    <% end %>
+    <% end %>
+
+    <!-- If there's an error message (e.g., city not found) -->
+    <% if @error_message %>
+    <div class="not-found">
+        <div class="box">
+            <!-- Error image (404 page) -->
+            <%= image_tag("404.png", class: "img-error") %>
+            <!-- Display the error message -->
+            <p class="error-message"><%= @error_message %></p>
+        </div>
+    </div>
+    <% else %>
+    <!-- If there's no error and valid weather data is available -->
+    <% if @description != "N/A" %>
+    <div class="weather-box">
+        <div class="box">
+            <div class="info-weather">
+                <div class="weather">
+                    <!-- Toggle between Celsius and Fahrenheit -->
+                    <div class="btn-toggle-container">
+                        <!-- Checkbox to switch units, calls toggleUnit function on change -->
+                        <input type="checkbox" id="check" onchange="toggleUnit(this)">
+                        <label for="check" class="btn-toggle"></label>
+                        <!-- Labels for temperature and wind speed units -->
+                        <span id="temp-unit-label"></span><span id="speed-unit-label"></span>
+                    </div>
+
+                    <!-- Weather icon with styles for positioning -->
+                    <img src="<%= @forecast.first[:icon_url]%>" alt="<%= @forecast.first[:weather_description]%>" style=" width: 85%; margin-bottom: -90px; margin-top: -90px; margin-left: 25px; justify-content: center; object-fit: cover;">
+                    <!-- Display the current temperature -->
+                    <p id="temperature" style="margin-bottom: 5px; margin-top: 10px">
+                        <span id="temp-value" class="temperature" style="margin-left: -15px"><%= @temperature %></span>
+                        <!-- Display temperature unit (°C) -->
+                        <span id="temp-unit" style="position: absolute; font-size: 24px; font-weight: 700; margin-left: -px; margin-top: -10px">°C</span>
+                    </p>
+                    <!-- Display weather description (e.g., sunny, cloudy) -->
+                    <p class="description" style=" margin-left: -10px; font-size: 22px"><%= @description %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display weather humidity and wind speed if the data is available -->
+    <% if @humidity && @wind_speed %>
+    <!-- Display humidity information -->
+    <div class="weather-details">
+        <div class="humidity">
+            <!-- Icon for humidity -->
+            <i class='bx bx-water'></i>
+            <div class="text">
+                <div class="info-humidity">
+                    <!-- Show humidity percentage -->
+                    <span><%= @humidity %>%</span>
+                </div>
+                <p>Humidity</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display wind speed information -->
+    <div class="weather-details">
+        <div class="wind">
+            <!-- Icon for wind -->
+            <i class='bx bx-wind'></i>
+            <div class="text">
+                <div class="info-wind">
+                    <!-- Show wind speed value -->
+                    <span id="speed-value"><%= @wind_speed %></span>
+                    <!-- Wind speed unit (Km/h) -->
+                    <span id="speed-unit"> Km/h</span>
+                </div>
+                <p>Wind Speed</p>
+            </div>
+        </div>
+    </div>
+    <% end %>
+    <% end %>
+    <% end %>
+</div>
+
+
+<div id="forecast-container" style="display:none">
+    <% if @weather_data_present && @forecast.any? %>
+    <!-- Forecast Container: Displays weather forecast data if the data is available -->
+
+    <div class="forecast-box">
+        <!-- This div contains the forecast and chart views -->
+
+        <div id="forecast-details-container">
+            <!-- This div holds the details view of the forecast -->
+
+            <div id="view-switcher" style="text-align: center; margin: 10px;">
+                <!-- View switch button to toggle between chart and details views -->
+                <i class='bx bx-chart' id="toggleViewButton" onclick="toggleView()" style="position: absolute; top: 10px; right: 10px; font-size: 1.7em"></i>
+            </div>
+
+            <div id="chart-view" style="display: none;">
+                <!-- This div contains the chart view, initially hidden -->
+
+                <script>
+                    // Initialize arrays to hold the data for chart visualization
+                    const labels = [];
+                    const tempMinData = [];
+                    const tempMaxData = [];
+                    const windSpeedData = [];
+
+                    <% @forecast.each_with_index do |day, index| %>
+                        labels.push("<%= day[:date] %>");
+                        tempMinData.push(<%= day[:temp_min] || 0 %>);
+                        tempMaxData.push(<%= day[:temp_max] || 0 %>);
+                        windSpeedData.push(<%= day[:wind_speed] || 0 %>);
+                    <% end %>
+                </script>
+
+                <!-- Canvas element where the chart will be rendered -->
+                <canvas id="weatherChart" width="820" height="470"></canvas>
+
+                <!-- Chart.js script for rendering the chart -->
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script>
+                    // Creating the chart object using Chart.js
+                    const ctx = document.getElementById("weatherChart").getContext("2d");
+
+                    const weatherChart = new Chart(ctx, {
+                        type: "bar", // The chart type is a bar chart
+                        data: {
+                            labels: labels, // X-axis labels (dates)
+                            datasets: [{
+                                    type: "bar", // Minimum temperature as bar chart
+                                    label: "Temp Min (°C)",
+                                    backgroundColor: "rgba(54, 162, 235, 0.5)",
+                                    borderColor: "rgba(54, 162, 235, 1)",
+                                    data: tempMinData, // Data for minimum temperatures
+                                },
+                                {
+                                    type: "bar", // Maximum temperature as bar chart
+                                    label: "Temp Max (°C)",
+                                    backgroundColor: "rgba(255, 99, 132, 0.5)",
+                                    borderColor: "rgba(255, 99, 132, 1)",
+                                    data: tempMaxData, // Data for maximum temperatures
+                                },
+                                {
+                                    type: "line", // Wind speed as line chart
+                                    label: "Wind Speed (Km/s)",
+                                    backgroundColor: "rgba(75, 192, 192, 1)",
+                                    borderColor: "rgba(75, 192, 192, 1)",
+                                    fill: false,
+                                    yAxisID: "y2", // This line uses a second y-axis
+                                    data: windSpeedData, // Data for wind speeds
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true, // Ensure the chart is responsive to screen size
+                            plugins: {
+                                tooltip: {
+                                    mode: "index", // Tooltip will show for all datasets at the same point on the x-axis
+                                    intersect: false,
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: "Date", // Label for the x-axis
+                                    },
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: "Temperature (°C)", // Label for the y-axis (left)
+                                    },
+                                },
+                                y2: {
+                                    position: "right", // Position of the second y-axis (right side)
+                                    title: {
+                                        display: true,
+                                        text: "Wind Speed (Km/s)", // Label for the second y-axis
+                                    },
+                                    grid: {
+                                        drawOnChartArea: false, // Don't display grid lines for the second y-axis
+                                    },
+                                },
+                            },
+                        },
+                    });
+                </script>
+            </div>
+
+
+            <div id="details-view" style="display: block;">
+                <!-- This div contains the details view, initially visible -->
+                <div id="forecast-details">
+                    <h2>Forecast Details</h2>
+                    <p>Select a date to view detailed information.</p>
+                    <p>
+                </div>
+            </div>
+        </div>
+
+        <div id="forecast-day-wrapper" style="position: relative; width: 94.5%; overflow: hidden; margin-left: -12px">
+            <!-- Wrapper for the forecast days that can be scrolled horizontally -->
+            <div id="forecast-day" style="display: flex; position: fixed; bottom: 8px; white-space: nowrap; width: 94.5%; overflow-x: scroll; padding: 10px; margin-top: 5px">
+                <!-- Forecast day buttons to show details on click -->
+                <ul>
+                    <% @forecast.each_with_index do |day, index| %>
+                    <li style="margin-bottom: 0px">
+                        <button onclick="showDetails('<%= day.to_json %>')" style="padding: 10px;  cursor: pointer; font-size: 20px; font-weight: 500">
+                            <img src="<%= day[:icon_url] %>" alt="<%= day[:weather_description] %>" style="width: 70px; height: 70px; margin-bottom: -5px">
+                            <span><%= day[:date]%></span> <!-- Display date for each forecast day -->
+                        </button>
+                    </li>
+                    <% end %>
+                </ul>
+            </div>
+        </div>
+
+        <script>
+            let currentUnit = 'celsius'; // Default temperature unit is Celsius
+            let currentSpeedUnit = 'Km/h'; // Default speed unit is Km/h
+
+            function convertTemperature(temp, toFahrenheit = true) {
+                // Function to convert temperature between Celsius and Fahrenheit
+                return toFahrenheit ? (temp * 9 / 5 + 32) : ((temp - 32) * 5 / 9);
+            }
+
+            function convertSpeed(speed, toMetersPerSecond = true) {
+                // Function to convert speed between Km/h and m/s
+                return toMetersPerSecond ? (speed / 3.6) : (speed * 3.6);
+            }
+
+            function toggleUnit(checkbox) {
+                // Function to toggle between Celsius/Fahrenheit and Km/h/M/s based on user input
+                if (checkbox.checked) {
+                    currentUnit = 'fahrenheit'; // Change to Fahrenheit
+                    currentSpeedUnit = 'M/s'; // Change to M/s
+                } else {
+                    currentUnit = 'celsius'; // Change to Celsius
+                    currentSpeedUnit = 'Km/h'; // Change to Km/h
+                }
+
+                // Update temperature and speed values in the main view
+                let tempElement = document.getElementById('temp-value');
+                if (tempElement) {
+                    let temp = parseFloat(tempElement.innerText);
+                    temp = currentUnit === 'fahrenheit' ? convertTemperature(temp, true) : convertTemperature(temp, false);
+                    tempElement.innerText = temp.toFixed(2);
+                    document.getElementById('temp-unit').innerText = currentUnit === 'fahrenheit' ? '°F' : '°C';
+                }
+
+                let speedElement = document.getElementById('speed-value');
+                if (speedElement) {
+                    let speed = parseFloat(speedElement.innerText);
+                    speed = currentSpeedUnit === 'M/s' ? convertSpeed(speed, true) : convertSpeed(speed, false);
+                    speedElement.innerText = speed.toFixed(2);
+                    document.getElementById('speed-unit').innerText = currentSpeedUnit === 'M/s' ? 'M/s' : 'Km/h';
+                }
+
+                // Update forecast temperature when the unit is changed
+                const forecastDetails = document.getElementById("forecast-details");
+                const dayData = forecastDetails?.getAttribute("data-forecast");
+                if (dayData) {
+                    showDetails(dayData); // Re-render the details with the updated units
+                }
+            }
+
+            function toggleView() {
+                // Function to toggle between the chart view and details view
+                const chartView = document.getElementById('chart-view');
+                const detailsView = document.getElementById('details-view');
+
+                if (chartView.style.display === 'none') {
+                    chartView.style.display = 'block'; // Show chart view
+                    detailsView.style.display = 'none'; // Hide details view
+                } else {
+                    chartView.style.display = 'none'; // Hide chart view
+                    detailsView.style.display = 'block'; // Show details view
+                }
+            }
+
+            function capitalizeWords(sentence) {
+                // Capitalize each word in the given sentence
+                return sentence.replace(/\b\w/g, char => char.toUpperCase());
+            }
+
+            function showDetails(dayData) {
+                // Parse the input JSON string (dayData) to extract weather information
+                const forecast = JSON.parse(dayData);
+
+                // Convert temperature to the current unit (Celsius or Fahrenheit)
+                const tempMin = currentUnit === 'celsius' ?
+                    forecast.temp_min :
+                    convertTemperature(forecast.temp_min, true).toFixed(1); // Convert to Fahrenheit if necessary
+                const tempMax = currentUnit === 'celsius' ?
+                    forecast.temp_max :
+                    convertTemperature(forecast.temp_max, true).toFixed(1); // Convert to Fahrenheit if necessary
+
+                // Convert wind speed to the selected unit (M/s or Km/h)
+                const windSpeed = currentSpeedUnit === 'M/s' ?
+                    convertSpeed(forecast.wind_speed, true).toFixed(2) :
+                    convertSpeed(forecast.wind_speed, false).toFixed(2); // Convert to Km/h if needed
+
+                // Select the container element where the details will be displayed
+                const container = document.getElementById("forecast-details");
+
+                // Store the weather data inside the container for potential later use
+                container.setAttribute("data-forecast", dayData);
+
+                // Capitalize the weather description (e.g., "clear sky" -> "Clear Sky")
+                let description = capitalizeWords(forecast.weather_description);
+
+                // Update the inner HTML of the container to display the weather details
+                container.innerHTML = `
+            <!-- Weather Description Section -->
+            <div class="forecast-item" id="weather-container">
+                <span class="forecast-title"></span>
+                <span class="forecast-value forecast-weather">${description}</span>
+            </div>
+            
+            <!-- Temperature Section: Displays Max and Min Temperatures -->
+            <div class="forecast-item" id="temp-container">
+                <span class="forecast-title"></span>
+                <span class="forecast-value forecast-temp-max">${tempMax}°${currentUnit === 'celsius' ? 'C' : 'F'}</span>
+                <span class="forecast-title">/</span>
+                <span class="forecast-value forecast-temp-min">${tempMin}°${currentUnit === 'celsius' ? 'C' : 'F'}</span>
+            </div>
+
+            <!-- Elements Container: Displays Rain Probability, Wind Speed, Humidity, and Pressure -->
+            <div id="elements-container" style="position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgb(255, 255, 255, 0.1); border: 1px rgba(255, 255, 255, 0.1); border-radius: 12px; display: flex; width: 90; width: 438.5px; height: 150px; font-size: 1.4em; justify-content: space-between; padding: 15px">
+                <div class="forecast-item" id="rain-container">
+                    <div>
+                        <!-- Icon for rain -->
+                        <i class='bx bx-cloud-light-rain'></i>
+                    </div>
+                    <span class="forecast-value forecast-rain-probability">${forecast.rain_probability}%</span> <!-- Display rain probability -->
+                </div>
+                <div class="forecast-item" id="wind-container">
+                    <div>
+                        <!-- Icon for wind -->
+                        <i class='bx bx-wind'></i>
+                    </div>
+                    <span class="forecast-value forecast-wind-speed">${windSpeed} ${currentSpeedUnit === 'M/s' ? 'M/s' : 'Km/h'}</span> <!-- Display wind speed -->
+                </div>
+                <div class="forecast-item" id="humidity-container">
+                    <div>
+                        <!-- Icon for humidity -->
+                        <i class='bx bx-water'></i>
+                    </div>
+                    <span class="forecast-value forecast-humidity">${forecast.humidity}%</span> <!-- Display humidity percentage -->
+                </div>
+                <div class="forecast-item" id="pressure-container">
+                    <div>
+                        <!-- Icon for pressure -->
+                        <i class='bx bx-vertical-bottom'></i>
+                    </div>
+                    <span class="forecast-value forecast-pressure">${forecast.pressure} hPa</span> <!-- Display atmospheric pressure -->
+                </div>
+            </div>
+
+            <!-- Sunrise and Sunset Section -->
+            <div id="sun-container" style="display: flex; position: absolute; bottom: 10px; align-items: center; padding: 10px; font-size: 1.4em">
+                <div class="forecast-item" id="sunrise-container" style="margin-left: 20px">
+                    <!-- Icon for sunrise -->
+                    <i class="bx bxs-sun"></i>
+                    <span class="forecast-title">Sunrise:</span>
+                    <span class="forecast-value forecast-sunrise">${forecast.sunrise}</span> <!-- Display sunrise time -->
+                </div>
+                <div class="forecast-item" id="sunset-container" style="margin-left: 20px">
+                    <!-- Icon for sunset -->
+                    <i class="bx bx-sun"></i>
+                    <span class="forecast-title">Sunset:</span>
+                    <span class="forecast-value forecast-sunset">${forecast.sunset}</span> <!-- Display sunset time -->
+                </div>
+            </div>
+        `;
+
+                // Show the forecast details container after the data is loaded
+                document.getElementById("forecast-details-container").style.display = "block";
+            }
+        </script>
+        <% end %>
+    </div>
+</div>
