@@ -3,9 +3,7 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
 
   config.hosts << "localhost"
-
-  config.hosts << "analyst:3000"
-  config.hosts << "ecd4-115-73-186-183.ngrok-free.app"
+  config.hosts << "weather-analyst.onrender.com"
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
@@ -96,7 +94,6 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   config.assets.precompile += %w(application.css)
-
   Rails.application.routes.default_url_options[:host] = 'localhost:3000'
 
 end

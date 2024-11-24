@@ -7,9 +7,8 @@ Rails.application.configure do
 
    
   config.hosts << "localhost"
-
-  config.hosts << "analyst:3000"
-  config.hosts << "ecd4-115-73-186-183.ngrok-free.app"
+  config.hosts << "weather-analyst.onrender.com"
+  config.hosts.clear
   # Settings specified here will take precedence over those in config/application.rb.
 
   # While tests run files are not watched, reloading is not necessary.
