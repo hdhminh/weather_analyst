@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  self.table_name = 'users'
   # This class represents the User model, which uses Devise for authentication and adds additional functionality.
   
   # Devise modules for user authentication. These include:
