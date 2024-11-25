@@ -6,29 +6,24 @@
         <%= render "devise/shared/error_messages", resource: resource %>
 
         <div class="input-box">
-            <%= f.text_field :login, placeholder: "Username", class: "input", autocomplete: "off" %>
+            <%= f.text_field :username, autofocus: true, required: true,  placeholder: "Username", class: "input", autocomplete: "off" %>
             <i class='bx bxs-user'></i>
         </div>
 
         <div class="input-box">
-            <%= f.password_field :password, placeholder: "Password (#{@minimum_password_length || 6} characters minimum)", class: "input", autocomplete: "new-password" %>
+            <%= f.text_field :email, autofocus: true, required: true,  placeholder: "Email", class: "input", autocomplete: "off" %>
+            <i class='bx bx-envelope'></i>
+        </div>
+
+        <div class="input-box">
+            <%= f.password_field :password, required: true, placeholder: "Password (#{@minimum_password_length || 6} characters minimum)", class: "input", autocomplete: "new-password" %>
             <i class='bx bxs-lock-alt'></i>
         </div>
 
         <div class="input-box">
-            <%= f.password_field :password_confirmation, placeholder: "Password Confirm", class: "input", autocomplete: "new-password" %>
+            <%= f.password_field :password_confirmation, required: true, placeholder: "Password Confirm", class: "input", autocomplete: "new-password" %>
             <i class='bx bx-check-shield'></i>
         </div>
-
-        <div class="remember-forgot">
-            <% if devise_mapping.rememberable? %>
-            <div class="field">
-                <%= f.check_box :remember_me, class: "input" , style: "display: inline-block; margin-top: -2px" %>
-                <%= f.label :remember_me, "I agree to the terms and conditions" %>
-            </div>
-            <% end %>
-        </div>
-
 
         <div class="actions">
             <%= f.submit "Register", class: "btn" %>

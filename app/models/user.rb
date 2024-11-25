@@ -1,5 +1,4 @@
 class User < ApplicationRecord
-  self.table_name = 'users'
   # This class represents the User model, which uses Devise for authentication and adds additional functionality.
   
   # Devise modules for user authentication. These include:
@@ -19,7 +18,15 @@ class User < ApplicationRecord
          authentication_keys: [:login]
 
   # Ensures that the `username` field is present and unique.
-  validates :username, presence: true, uniqueness: true
+  validates :username, presence: true, uniqueness: { case_sensitive: false }
+  validates_format_of :username, with: /^[a-zA-Z0-9_\.]*$/, :multiline => true
+  validate :validate_username
+
+  def validate_username
+    if User.where(email: username).exists?
+      errors.add(:username, :invalid)
+    end
+  end
 
   # Custom login attribute writer to handle both username and email logins.
   attr_writer :login
@@ -32,13 +39,11 @@ class User < ApplicationRecord
 
   # Custom method to allow Devise to authenticate users by either username or email.
   def self.find_for_database_authentication(warden_conditions)
-    conditions = warden_conditions.dup # Duplicate conditions to avoid modifying the original object.
-    if login = conditions.delete(:login) # Check if `login` parameter exists.
-      # IF has already, find the user has the same with the login 
-      where(conditions.to_hash).where(["lower(username) = :value OR lower(email) = :value", { :value => login }]).first
-    else
-      # Default behavior: find user by email if `login` is not provided.
-      where(conditions.to_hash).first
+    conditions = warden_conditions.dup
+    if (login = conditions.delete(:login))
+      where(conditions.to_h).where(["lower(username) = :value OR lower(email) = :value", { :value => login.downcase }]).first
+    elsif conditions.has_key?(:username) || conditions.has_key?(:email)
+      where(conditions.to_h).first
     end
   end
 
@@ -59,7 +64,8 @@ class User < ApplicationRecord
             email: data['email'], # Set the user's email from OmniAuth data.
             password: Devise.friendly_token[0,20], # Generate a random password for the new user.
             provider: provider, # Save the OmniAuth provider (e.g., Google).
-            uid: access_token.uid  # Save the unique identifier provided by the OmniAuth provider.
+            uid: access_token.uid,  # Save the unique identifier provided by the OmniAuth provider.
+            username: data['name'] || data['email'].split('@').first
         )
     end
 
